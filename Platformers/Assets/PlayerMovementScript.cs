@@ -13,12 +13,14 @@ public class PlayerMovementScript : MonoBehaviour
 	public float speed= 2f;
 	public float jumpHeight = 200f;
 	public Vector2 jumpDirection;
+	public bool wallJump;
 
 	void Start () 
 	{
 		grounded = false;
 		player = GetComponent<Rigidbody2D> ();
 		isFacingRight = true;
+		wallJump = false;
 	}
 	
 	void Update ()
@@ -30,7 +32,9 @@ public class PlayerMovementScript : MonoBehaviour
 		grounded = Physics2D.OverlapCircle (groundCheck.position, 0.1f, whatIsGround);
 
 		horizontal = Input.GetAxis ("Horizontal");
-		if (grounded) {
+		if (grounded) 
+		{
+			wallJump = false;
 			player.velocity = new Vector2 (horizontal, player.velocity.y);
 
 			if (horizontal < 0 && isFacingRight || horizontal > 0 && !isFacingRight) 
@@ -45,10 +49,15 @@ public class PlayerMovementScript : MonoBehaviour
 		}
 		else
 		{
-			if (Input.GetKeyDown (KeyCode.Space) && hit.collider.tag == "Wall") 
+			if (hit.transform != null) 
 			{
-					transform.localScale = transform.localScale.x == 2.3f ? new Vector2 (-2.3f, 2.9f) : new Vector2(2.3f, 2.9f); 
-				player.velocity = new Vector2 (speed * hit.normal.x, speed);
+				if (Input.GetKeyDown (KeyCode.Space) && hit.collider.tag == "Wall") 
+				{
+					StopCoroutine ("TurnIt");
+					StartCoroutine ("TurnIt");
+					player.velocity = new Vector2 (speed * hit.normal.x, speed);
+					wallJump = true;
+				}
 			}
 		}
 	}
@@ -68,5 +77,18 @@ public class PlayerMovementScript : MonoBehaviour
 			scale.x *= -1;
 			transform.localScale = scale;
 		}
+	}
+	IEnumerator TurnIt()
+	{
+		if (transform.localScale.x >= 2.2f && transform.localScale.x <= 2.4f) 
+		{
+			transform.localScale = new Vector2 (-2.3f, 2.9f);
+		} 
+		else 
+		{
+			transform.localScale = new Vector2 (2.3f, 2.9f);
+		}
+		//transform.localScale = transform.localScale.x == 2.3f ? new Vector2 (-2.3f, 2.9f) : new Vector2(2.3f, 2.9f); 
+		yield return new WaitForFixedUpdate ();
 	}
 }
